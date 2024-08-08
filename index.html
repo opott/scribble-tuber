@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>opott's scribble-tuber</title>
+    </head>
+    <body>
+        <h1>Hello!</h1>
+        <input type="range" id="position-slider" min="0" max="100">
+        <img id="scribbletuber" src="close.png" style="left: 0;position: relative">
+        <script>
+            const positionSlider = document.getElementById('position-slider')
+            const scribbletuber = document.getElementById('scribbletuber')
+
+            scribbletuber.style.left = `${positionSlider.value}px`
+            positionSlider.addEventListener('input', () => {
+                console.log('positionSlider.value:', positionSlider.value)
+                scribbletuber.style.left = `${positionSlider.value}px`
+            })
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then((stream) => {
+              alert('audio granted!')
+              const audio = new AudioContext()
+              const analyser = audio.createAnalyser()
+              analyser.minDecibels = -100
+              analyser.maxDecibels = 0
+              analyser.fftSize = 64 * 2 * 2 * 2 * 2
+              analyser.smoothingTimeConstant = 0.70
+              const source = audio.createMediaStreamSource(stream)
+              source.connect(analyser)
+              const array = new Uint8Array(analyser.frequencyBinCount)
+              function speak() {
+                requestAnimationFrame(speak)
+                analyser.getByteFrequencyData(array)
+
+                let length = 0
+                for (let i = 0; i < array.length; i++) {
+                  if (array[i] > 0) {
+                    length += 1
+                  }
+                  array[i] = (((array[i] * 100) / 255) - 100) * -1
+                }
+                const dB = Math.min(100, -Math.round(array.reduce((x, y) => x + y / array.length)) + 200)
+
+
+                if (dB > 25) {
+                  scribbletuber.src = 'close.png'
+                  scribbletuber.style.bottom = `50px`
+                } else {
+                  scribbletuber.src = 'open.png'
+                  scribbletuber.style.bottom = `0px`
+                }
+              }
+              speak()
+        })
+
+
+        </script>
+    </body>
+</html>
